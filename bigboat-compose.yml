@@ -1,0 +1,5 @@
+name: data-gathering
+version: 1.0
+
+agent:
+  enable_ssh: true

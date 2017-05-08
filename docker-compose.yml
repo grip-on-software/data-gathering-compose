@@ -1,0 +1,35 @@
+agent:
+  image: $DOCKER_REGISTRY/gros-data-gathering
+  volumes:
+    - /agent/home/agent/export:/home/agent/export
+  environment:
+    - JIRA_SERVER=https://{{JIRA_SERVER}}/jira/
+    - JIRA_USER={{JIRA_REPORTER}}
+    - JIRA_PASSWORD={{JIRA_PASSWORD}}
+    - DEFINITIONS_TYPE=subversion
+    - DEFINITIONS_NAME=kwaliteitsmetingen
+    - DEFINITIONS_URL=http://{{SVN_SERVER}}/commons/algemeen/kwaliteitsmetingen/trunk/
+    - HISTORY_URL=http://{{JENKINS_SERVER}}/view/Quality%20reports/job/create-full-history/ws/
+    - HISTORY_PATH=/var/jenkins/workspace/create-full-history/
+    - GITLAB_URL=http://www.gitlab.gros.example/
+    - GITLAB_TOKEN={{GITLAB_API_TOKEN}}
+    - DROPINS_STORE=owncloud
+    - DROPINS_URL=http://{{DROPINS_SERVER}}u/
+    - DROPINS_USER=jenkins
+    - DROPINS_PASSWORD=jenkins2
+    - MONETDB_USER=monetdb
+    - MONETDB_PASSWORD=monetdb
+    - MONETDB_HOST={{MONETDB_SERVER}}
+    - MONETDB_NAME=gros
+    - SSH_USERNAME=agent-{{JIRA_KEY}}
+    - SSH_HOST={{SSH_HOST}}
+    - SSH_HTTPS_CERT=certs/gros.crt
+    - IMPORTER_URL=http://{{JENKINS_SERVER}}/view/GROS/job/build-importerjson/lastSuccessfulBuild/artifact/Code/importerjson/dist/*zip*/dist.zip
+    - JIRA_KEY={{JIRA_KEY}}
+    - PROJECT_NAME={{PROJECT_NAME}} #${BIGBOAT_PROJECT}
+    - SUBPROJECT_KEY={{SUBPROJECT_KEY}}
+    - GITLAB_SOURCE_HOST=www.gitlab.{{PROJECT_NAME}}.example
+    - GITLAB_SOURCE_USER={{GITLAB_REPORTER}}
+    - GITLAB_SOURCE_PASSWORD={{GITLAB_PASSWORD}}
+    - GITLAB_SOURCE_TOKEN={{GITLAB_API_TOKEN}}
+    - CRON_PERIOD=weekly
