@@ -9,6 +9,7 @@ agent:
     - DEFINITIONS_TYPE=subversion
     - DEFINITIONS_NAME=kwaliteitsmetingen
     - DEFINITIONS_URL=http://{{SVN_SERVER}}/commons/algemeen/kwaliteitsmetingen/trunk/
+    - DEFINITONS_PATH=kwaliteitsmetingen/trunk
     - HISTORY_URL=http://{{JENKINS_SERVER}}/view/Quality%20reports/job/create-full-history/ws/
     - HISTORY_PATH=/var/jenkins/workspace/create-full-history/
     - GITLAB_URL=http://www.gitlab.gros.example/
