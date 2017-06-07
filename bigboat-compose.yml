@@ -1,5 +1,5 @@
-name: data-gathering
-version: 1.0
+name: gros-data-gathering-agent
+version: '1'
 
 agent:
   enable_ssh: true

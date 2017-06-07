@@ -9,9 +9,9 @@ except ImportError:
     raise
 
 import argparse
-import configparser
 import itertools
 import logging
+import yaml
 from bigboat import Client_v1, Client_v2
 
 def parse_args():
@@ -40,10 +40,14 @@ class Uploader(object):
     BigBoat dashboard application compose file uploader using the BigBoat API.
     """
 
-    def __init__(self, site, key=None, config=None):
+    FILES = [
+        ('docker-compose.yml', 'dockerCompose'),
+        ('bigboat-compose.yml', 'bigboatCompose')
+    ]
+
+    def __init__(self, site, **options):
         self._site = site
-        self._key = key
-        self._config = config
+        self._options = options
 
         self._api = None
 
@@ -61,17 +65,13 @@ class Uploader(object):
             return self._api
 
         client = Client_v2
-        if self._key is not None:
-            key = self._key
+        if 'key' in self._options and 'v1' not in self._options:
+            key = self._options['key']
         else:
-            if self._config is None or \
-                not self._config.has_section(self._site) or \
-                not self._config.has_option(self._site, 'key') or \
-                self._config.has_option(self._site, 'v1'):
-                client = Client_v1
-                key = None
-            else:
-                key = self._config.get(self._site, 'key')
+            key = None
+
+        if key is None:
+            client = Client_v1
 
         logging.info('Setting up API for %s: %s', self._site, repr(client))
 
@@ -90,11 +90,14 @@ class Uploader(object):
         if application is None:
             logging.warning('Application %s version %s is not on %s, creating.',
                             name, version, self._site)
+            if self.api.update_app(name, version) is None:
+                raise RuntimeError('Cannot register application on {}'.format(self._site))
 
-        for filename in ['docker-compose.yml', 'bigboat-compose.yml']:
+        for filename, api_filename in self.FILES:
             with open(filename) as compose_file:
-                self.api.update_compose(name, version, filename,
-                                        compose_file.read())
+                if not self.api.update_compose(name, version, api_filename,
+                                               compose_file.read()):
+                    raise RuntimeError('Cannot update compose file on {}'.format(self._site))
 
 def main():
     """
@@ -105,19 +108,23 @@ def main():
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                         level=getattr(logging, args.log.upper(), None))
 
-    config = configparser.RawConfigParser()
-    config.read('settings.cfg')
+    with open('settings.yml') as settings_file:
+        config = yaml.load(settings_file)
 
     if args.sites:
         logging.info('Sites: %s', ', '.join(args.sites))
         # pylint: disable=no-member
         for site, key in itertools.zip_longest(args.sites, args.keys):
-            uploader = Uploader(site, key=key, config=config)
+            options = config.get(site, {})
+            if key is not None:
+                options['key'] = key
+
+            uploader = Uploader(site, **options)
             uploader.upload(args.name, args.version)
     else:
-        logging.info('Default sites: %s', ', '.join(config.sections()))
-        for site in config.sections():
-            uploader = Uploader(site, config=config)
+        logging.info('Default sites: %s', ', '.join(config.keys()))
+        for site, options in list(config.items()):
+            uploader = Uploader(site, **options)
             uploader.upload(args.name, args.version)
 
 if __name__ == '__main__':
