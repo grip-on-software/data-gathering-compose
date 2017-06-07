@@ -35,41 +35,66 @@ def parse_args():
 
     return parser.parse_args()
 
-def get_api(site, key=None, config=None):
+class Uploader(object):
     """
-    Retrieve an API instance for the given `site` URL. If possible, the API is
-    instantiated as a v2 Client with the given `key` or one from the `config`
-    ConfigParser. If the key and the configuration object/section/option is not
-    available, or the section is marked as v1, then a Client_v1 object is given.
+    BigBoat dashboard application compose file uploader using the BigBoat API.
     """
 
-    client = Client_v2
-    if key is None:
-        if config is None or not config.has_section(site) or \
-            not config.has_option(site, 'key') or config.has_option(site, 'v1'):
-            client = Client_v1
+    def __init__(self, site, key=None, config=None):
+        self._site = site
+        self._key = key
+        self._config = config
+
+        self._api = None
+
+    @property
+    def api(self):
+        """
+        Retrieve an API instance for the given site URL. If possible, the API
+        is instantiated as a v2 Client with the API key or one from the provided
+        configuration. If the key and the configuration object/section/option
+        is not available, or the section is marked as v1, then a Client_v1
+        object is given.
+        """
+
+        if self._api is not None:
+            return self._api
+
+        client = Client_v2
+        if self._key is not None:
+            key = self._key
         else:
-            key = config.get(site, 'key')
+            if self._config is None or \
+                not self._config.has_section(self._site) or \
+                not self._config.has_option(self._site, 'key') or \
+                self._config.has_option(self._site, 'v1'):
+                client = Client_v1
+                key = None
+            else:
+                key = self._config.get(self._site, 'key')
 
-    logging.info('Setting up API for %s: %s', site, repr(client))
+        logging.info('Setting up API for %s: %s', self._site, repr(client))
 
-    return client(site, api_key=key)
+        self._api = client(self._site, api_key=key)
+        return self._api
 
-def upload_site(site, name, version, key=None, config=None):
-    """
-    Upload the compose files to a specific site.
-    """
+    def upload(self, name, version):
+        """
+        Upload the compose files to a specific site.
+        """
 
-    api = get_api(site, key=key, config=config)
-    if isinstance(api, Client_v1):
-        raise RuntimeError('API must use v2 to upload compose files for {}'.format(site))
+        if isinstance(self.api, Client_v1):
+            raise RuntimeError('API must use v2 to upload compose files for {}'.format(self._site))
 
-    for filename in ['docker-compose.yml', 'bigboat-compose.yml']:
-        with open(filename) as compose_file:
-            application = api.get_app(name, version)
-            if application is None:
-                raise RuntimeError('Application does not yet exist on {}'.format(site))
-            api.update_compose(name, version, filename, compose_file.read())
+        application = self.api.get_app(name, version)
+        if application is None:
+            logging.warning('Application %s version %s is not on %s, creating.',
+                            name, version, self._site)
+
+        for filename in ['docker-compose.yml', 'bigboat-compose.yml']:
+            with open(filename) as compose_file:
+                self.api.update_compose(name, version, filename,
+                                        compose_file.read())
 
 def main():
     """
@@ -87,11 +112,13 @@ def main():
         logging.info('Sites: %s', ', '.join(args.sites))
         # pylint: disable=no-member
         for site, key in itertools.zip_longest(args.sites, args.keys):
-            upload_site(site, args.name, args.version, key=key, config=config)
+            uploader = Uploader(site, key=key, config=config)
+            uploader.upload(args.name, args.version)
     else:
         logging.info('Default sites: %s', ', '.join(config.sections()))
         for site in config.sections():
-            upload_site(site, args.name, args.version, config=config)
+            uploader = Uploader(site, config=config)
+            uploader.upload(args.name, args.version)
 
 if __name__ == '__main__':
     main()
