@@ -107,7 +107,7 @@ class Uploader(object):
         Request that the default instance for the application is (re)started.
         """
 
-        parameters = self._options.get('parameters', {})
+        parameters = self._options.get('params', {})
 
         instance = self.api.update_instance(name, name, version,
                                             parameters=parameters)
