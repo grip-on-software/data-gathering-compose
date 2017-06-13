@@ -1,3 +1,15 @@
+# Compose file for the GROS data gathering agent.
+#
+# When starting this application manually in the BigBoat Docker dashboard,
+# ensure that you have all the credentials (usernames, passwords, tokens)
+# and other parameters (project names, source locations) that you are prompted.
+#
+# You may be able to leave out some of these credentials. For example, a dropins
+# file store and MonetDB database are not necessary to have in a project.
+#
+# Supply a dash (-) in for unused parameters to indicate that the value is
+# empty. The BigBoat UI does not allow leaving parameters empty (IQT-1456).
+
 agent:
   image: $DOCKER_REGISTRY/gros-data-gathering
   volumes:
@@ -12,14 +24,14 @@ agent:
     - DEFINITONS_PATH=kwaliteitsmetingen/trunk
     - HISTORY_URL=http://{{JENKINS_SERVER}}/view/Quality%20reports/job/create-full-history/ws/
     - HISTORY_PATH=/var/jenkins/workspace/create-full-history/
-    - GITLAB_URL=http://www.gitlab.gros.example/
+    - GITLAB_URL=http://www.gitlab.{{PROJECT_NAME}}.example/
     - GITLAB_TOKEN={{GITLAB_API_TOKEN}}
     - DROPINS_STORE=owncloud
-    - DROPINS_URL=http://{{DROPINS_SERVER}}u/
-    - DROPINS_USER=jenkins
-    - DROPINS_PASSWORD=jenkins2
-    - MONETDB_USER=monetdb
-    - MONETDB_PASSWORD=monetdb
+    - DROPINS_URL=http://www.owncloud.{{PROJECT_NAME}}.example/
+    - DROPINS_USER={{DROPINS_USER}}
+    - DROPINS_PASSWORD={{DROPINS_PASSWORD}}
+    - MONETDB_USER={{MONETDB_USER}}
+    - MONETDB_PASSWORD={{MONETDB_PASSWORD}}
     - MONETDB_HOST={{MONETDB_SERVER}}
     - MONETDB_NAME=gros
     - SSH_USERNAME=agent-{{JIRA_KEY}}
@@ -33,5 +45,5 @@ agent:
     - SOURCE_USERNAME={{SOURCE_USERNAME}}
     - SOURCE_PASSWORD={{SOURCE_PASSWORD}}
     - SOURCE_TOKEN={{SOURCE_GITLAB_TOKEN}}
-    - SOURCE_TFS=
+    - SOURCE_TFS={{SOURCE_TFS}}
     - CRON_PERIOD=weekly
