@@ -39,11 +39,16 @@ agent:
     - SSH_HTTPS_CERT=certs/gros.crt
     - IMPORTER_URL=http://{{JENKINS_SERVER}}/view/GROS/job/build-importerjson/lastSuccessfulBuild/artifact/Code/importerjson/dist/*zip*/dist.zip
     - JIRA_KEY={{JIRA_KEY}}
-    - PROJECT_NAME={{PROJECT_NAME}} #${BIGBOAT_PROJECT}
+    - PROJECT_NAME={{PROJECT_NAME}}
     - SUBPROJECT_KEY={{SUBPROJECT_KEY}}
     - SOURCE_HOST={{SOURCE_HOST}}
     - SOURCE_USERNAME={{SOURCE_USERNAME}}
     - SOURCE_PASSWORD={{SOURCE_PASSWORD}}
     - SOURCE_GITLAB_TOKEN={{SOURCE_GITLAB_TOKEN}}
     - SOURCE_TFS={{SOURCE_TFS}}
+    - SOURCE_GITLAB_GROUP={{SOURCE_GITLAB_GROUP}}
+    - SOURCE_FROM_DATE={{SOURCE_FROM_DATE}}
+    - SOURCE_TAG={{SOURCE_TAG}}
+    - SOURCE_CREDENTIALS_ENV=SSH_IDENTITY
+    - SSH_IDENTITY=/home/agent/.ssh/id_rsa
     - CRON_PERIOD=weekly
