@@ -24,9 +24,9 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Upload compose files')
     parser.add_argument('sites', nargs='*',
-                        help='URLs to update to, or default to settings.cfg')
+                        help='URLs to update to, or default to settings.yml')
     parser.add_argument('--keys', nargs='*', default=[],
-                        help='API keys to use, or default to settings.cfg')
+                        help='API keys to use, or default to settings.yml')
     parser.add_argument('--name', default='gros-data-gathering-agent',
                         help='Name of the application')
     parser.add_argument('--version', default='1',
