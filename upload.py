@@ -54,6 +54,12 @@ class Uploader(object):
 
         self._api = None
 
+    def _get_key(self, default=None):
+        if 'key' in self._options and 'v1' not in self._options:
+            return self._options['key']
+
+        return default
+
     @property
     def api(self):
         """
@@ -68,10 +74,7 @@ class Uploader(object):
             return self._api
 
         client = Client_v2
-        if 'key' in self._options and 'v1' not in self._options:
-            key = self._options['key']
-        else:
-            key = None
+        key = self._get_key()
 
         if key is None:
             client = Client_v1
@@ -107,7 +110,11 @@ class Uploader(object):
         Request that the default instance for the application is (re)started.
         """
 
-        parameters = self._options.get('params', {})
+        parameters = {
+            "BIGBOAT_HOST": self._site,
+            "BIGBOAT_KEY": self._get_key('-')
+        }
+        parameters.update(self._options.get('params', {}))
 
         instance = self.api.update_instance(name, name, version,
                                             parameters=parameters)
