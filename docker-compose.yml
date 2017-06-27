@@ -37,7 +37,7 @@ agent:
     - SSH_USERNAME=agent-{{JIRA_KEY}}
     - SSH_HOST={{SSH_HOST}}
     - SSH_HTTPS_CERT=certs/gros.crt
-    - IMPORTER_URL=http://{{JENKINS_SERVER}}/view/GROS/job/build-importerjson/lastSuccessfulBuild/artifact/Code/importerjson/dist/*zip*/dist.zip
+    - IMPORTER_URL=http://{{JENKINS_SERVER}}/view/GROS%20build/job/build-importerjson/lastSuccessfulBuild/artifact/Code/importerjson/dist/*zip*/dist.zip
     - BIGBOAT_HOST={{BIGBOAT_HOST}}
     - BIGBOAT_KEY={{BIGBOAT_KEY}}
     - JIRA_KEY={{JIRA_KEY}}
