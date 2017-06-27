@@ -53,4 +53,4 @@ agent:
     - SOURCE_TAG={{SOURCE_TAG}}
     - SOURCE_CREDENTIALS_ENV={{SOURCE_CREDENTIALS_ENV}}
     - SSH_IDENTITY=/home/agent/.ssh/id_rsa
-    - CRON_PERIOD=weekly
+    - CRON_PERIOD={{CRON_PERIOD}}
