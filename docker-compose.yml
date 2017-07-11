@@ -15,6 +15,7 @@ agent:
   volumes:
     - /agent/home/agent/export:/home/agent/export
   environment:
+    - AGENT_LOGGING=1
     - JIRA_SERVER=https://{{JIRA_SERVER}}/jira/
     - JIRA_USER={{JIRA_REPORTER}}
     - JIRA_PASSWORD={{JIRA_PASSWORD}}
