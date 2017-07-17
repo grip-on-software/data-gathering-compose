@@ -24,7 +24,7 @@ agent:
     - DEFINITIONS_URL=http://{{GITLAB_SERVER}}/gros/quality-report-data-{}
     - DEFINITIONS_PATH=quality-report-data/{}
     - HISTORY_URL=http://{{GITLAB_SERVER}}/gros/quality-report-data-{}/raw/master/
-    - HISTORY_PATH=quality-report-data/
+    - HISTORY_PATH=quality-report-data/{}
     - GITLAB_URL=http://www.gitlab.{{PROJECT_NAME}}.example/
     - GITLAB_TOKEN={{GITLAB_API_TOKEN}}
     - DROPINS_STORE=owncloud
