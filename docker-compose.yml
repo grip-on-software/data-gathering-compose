@@ -21,10 +21,13 @@ agent:
     - JIRA_PASSWORD={{JIRA_PASSWORD}}
     - DEFINITIONS_TYPE=git
     - DEFINITIONS_NAME=quality-report-data
-    - DEFINITIONS_URL=http://{{GITLAB_SERVER}}/gros/quality-report-data-{}
-    - DEFINITIONS_PATH=quality-report-data/{}
-    - HISTORY_URL=http://{{GITLAB_SERVER}}/gros/quality-report-data-{}/raw/master/
-    - HISTORY_PATH=quality-report-data/{}
+    - DEFINITIONS_URL=http://{{GITLAB_SERVER}}/gros/quality-report-{}-definition
+    - DEFINITIONS_PATH=quality-report-definition/{}
+    - DEFINITIONS_BASE=ictu
+    - DEFINITIONS_BASE_URL=http://{{GITLAB_SERVER}}/gros/quality-report-data-ictu
+    - DEFINITIONS_REQUIRED_PATHS=
+    - HISTORY_URL=http://{{GITLAB_SERVER}}/gros/quality-report-{}-history
+    - HISTORY_PATH=quality-report-history/{}
     - GITLAB_URL=http://www.gitlab.{{PROJECT_NAME}}.example/
     - GITLAB_TOKEN={{GITLAB_API_TOKEN}}
     - DROPINS_STORE=owncloud
