@@ -26,6 +26,8 @@ agent:
     - DEFINITIONS_BASE=ictu
     - DEFINITIONS_BASE_URL=http://{{GITLAB_SERVER}}/gros/quality-report-data-ictu
     - DEFINITIONS_REQUIRED_PATHS=
+    - DEFINITIONS_HOST={{GITLAB_SERVER}}
+    - DEFINTIIONS_GITLAB_TOKEN={{DEFINITIONS_GITLAB_TOKEN}}
     - HISTORY_URL=http://{{GITLAB_SERVER}}/gros/quality-report-{}-history
     - HISTORY_PATH=quality-report-history/{}
     - GITLAB_URL=http://www.gitlab.{{PROJECT_NAME}}.example/
