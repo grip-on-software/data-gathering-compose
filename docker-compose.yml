@@ -49,6 +49,12 @@ agent:
     - IMPORTER_URL=http://{{JENKINS_SERVER}}/view/GROS%20build/job/build-importerjson/lastSuccessfulBuild/artifact/Code/importerjson/dist/*zip*/dist.zip
     - BIGBOAT_HOST={{BIGBOAT_HOST}}
     - BIGBOAT_KEY={{BIGBOAT_KEY}}
+    - JENKINS_HOST={{JENKINS_HOST}}
+    - JENKINS_USERNAME={{JENKINS_USERNAME}}
+    - JENKINS_PASSWORD={{JENKINS_PASSWORD}}
+    - JENKINS_VERIFY=false
+    - JENKINS_JOB=
+    - JENKINS_TOKEN=
     - JIRA_KEY={{JIRA_KEY}}
     - PROJECT_NAME={{PROJECT_NAME}}
     - SUBPROJECT_KEY={{SUBPROJECT_KEY}}
