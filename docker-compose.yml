@@ -33,6 +33,7 @@ agent:
     - DEFINITIONS_GITLAB_TOKEN={{DEFINITIONS_GITLAB_TOKEN}}
     - HISTORY_URL=http://{{GITLAB_SERVER}}/gros/quality-report-{}-history
     - HISTORY_PATH=quality-report-history/{}
+    - HISTORY_FILENAME=history.json.gz
     - GITLAB_URL=http://www.gitlab.{{PROJECT_NAME}}.example/
     - GITLAB_TOKEN={{GITLAB_API_TOKEN}}
     - DROPINS_STORE=owncloud
