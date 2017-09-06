@@ -12,6 +12,7 @@ import argparse
 import copy
 import itertools
 import logging
+import time
 import yaml
 from bigboat import Client_v1, Client_v2
 
@@ -35,6 +36,8 @@ def parse_args():
                         help='Log level (info by default)')
     parser.add_argument('--start', action='store_true', default=False,
                         help='(Re)start an instance after updating the app')
+    parser.add_argument('--no-stop', action='store_false', dest='stop', default=True,
+                        help='Skip stopping an existing instance')
 
     return parser.parse_args()
 
@@ -43,10 +46,14 @@ class Uploader(object):
     BigBoat dashboard application compose file uploader using the BigBoat API.
     """
 
+    # Local file names and BigBoat API endpoints to upload compose files to
     FILES = [
         ('docker-compose.yml', 'dockerCompose'),
         ('bigboat-compose.yml', 'bigboatCompose')
     ]
+
+    # Number of seconds to wait to check if the instance has been stopped
+    RESTART_POLL = 2
 
     def __init__(self, site, **options):
         self._site = site
@@ -105,7 +112,7 @@ class Uploader(object):
                                                compose_file.read()):
                     raise RuntimeError('Cannot update compose file on {}'.format(self._site))
 
-    def start(self, name, version):
+    def start(self, name, version, stop=True):
         """
         Request that the default instance for the application is (re)started.
         """
@@ -115,6 +122,16 @@ class Uploader(object):
             "BIGBOAT_KEY": self._get_key('-')
         }
         parameters.update(self._options.get('params', {}))
+
+        if stop:
+            first = True
+            while self.api.get_instance(name):
+                if first:
+                    self.api.delete_instance(name)
+                    logging.info('Waiting for old instance to be removed...')
+
+                time.sleep(self.RESTART_POLL)
+                first = False
 
         instance = self.api.update_instance(name, name, version,
                                             parameters=parameters)
@@ -132,7 +149,7 @@ def run(args, site, options):
     uploader = Uploader(site, **options)
     uploader.upload(args.name, args.version)
     if args.start:
-        uploader.start(args.name, args.version)
+        uploader.start(args.name, args.version, stop=args.stop)
 
 DEFAULT_SITE = 'default'
 
