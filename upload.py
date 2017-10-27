@@ -10,7 +10,6 @@ except ImportError:
 
 import argparse
 import copy
-import itertools
 import logging
 import time
 import yaml
@@ -32,12 +31,13 @@ def parse_args():
                         help='Name of the application')
     parser.add_argument('--version', default='1',
                         help='Version number of the application')
+    parser.add_argument('--instance', help='Name of the instance')
     parser.add_argument('--log', choices=log_levels, default='INFO',
                         help='Log level (info by default)')
     parser.add_argument('--start', action='store_true', default=False,
                         help='(Re)start an instance after updating the app')
-    parser.add_argument('--no-stop', action='store_false', dest='stop', default=True,
-                        help='Skip stopping an existing instance')
+    parser.add_argument('--no-stop', action='store_false', dest='stop',
+                        default=True, help='Skip stopping an existing instance')
 
     return parser.parse_args()
 
@@ -55,15 +55,24 @@ class Uploader(object):
     # Number of seconds to wait to check if the instance has been stopped
     RESTART_POLL = 2
 
-    def __init__(self, site, **options):
+    def __init__(self, site, site_keys, **options):
         self._site = site
+        self._site_keys = site_keys
         self._options = options
+
+        if 'remote_site' in self._options:
+            self._remote_site = self._options['remote_site']
+        else:
+            self._remote_site = self._site
 
         self._api = None
 
-    def _get_key(self, default=None):
-        if 'key' in self._options and 'v1' not in self._options:
-            return self._options['key']
+    def _get_key(self, default=None, site=None):
+        if site is None:
+            site = self._site
+
+        if site in self._site_keys and self._site_keys[site] is not None:
+            return self._site_keys[site]
 
         return default
 
@@ -81,14 +90,14 @@ class Uploader(object):
             return self._api
 
         client = Client_v2
-        key = self._get_key()
+        key = self._get_key(site=self._remote_site)
 
         if key is None:
             client = Client_v1
 
-        logging.info('Setting up API for %s', self._site)
+        logging.info('Setting up API for %s', self._remote_site)
 
-        self._api = client(self._site, api_key=key)
+        self._api = client(self._remote_site, api_key=key)
         return self._api
 
     def upload(self, name, version):
@@ -97,29 +106,32 @@ class Uploader(object):
         """
 
         if isinstance(self.api, Client_v1):
-            raise RuntimeError('API must use v2 to upload compose files for {}'.format(self._site))
+            raise RuntimeError('API for {} cannot upload compose files'.format(self._remote_site))
 
         application = self.api.get_app(name, version)
         if application is None:
             logging.warning('Application %s version %s is not on %s, creating.',
-                            name, version, self._site)
+                            name, version, self._remote_site)
             if self.api.update_app(name, version) is None:
-                raise RuntimeError('Cannot register application on {}'.format(self._site))
+                raise RuntimeError('Cannot register application on {}'.format(self._remote_site))
 
         for filename, api_filename in self.FILES:
             with open(filename) as compose_file:
                 if not self.api.update_compose(name, version, api_filename,
                                                compose_file.read()):
-                    raise RuntimeError('Cannot update compose file on {}'.format(self._site))
+                    raise RuntimeError('Cannot update compose file on {}'.format(self._remote_site))
 
-    def start(self, name, version, stop=True):
+    def start(self, name, version, instance_name=None, stop=True):
         """
-        Request that the default instance for the application is (re)started.
+        Request that the instance for the application is (re)started.
         """
+
+        if instance_name is None:
+            instance_name = self._options.get('instance', name)
 
         parameters = {
             "BIGBOAT_HOST": self._site,
-            "BIGBOAT_KEY": self._get_key('-')
+            "BIGBOAT_KEY": self._get_key(default='-')
         }
         parameters.update(self._options.get('params', {}))
 
@@ -133,23 +145,24 @@ class Uploader(object):
                 time.sleep(self.RESTART_POLL)
                 first = False
 
-        instance = self.api.update_instance(name, name, version,
+        instance = self.api.update_instance(instance_name, name, version,
                                             parameters=parameters)
         if instance is None:
-            raise RuntimeError('Could not start instance on {}'.format(self._site))
+            raise RuntimeError('Could not start instance on {}'.format(self._remote_site))
 
         logging.info('Started application %s version %s on %s', name, version,
-                     self._site)
+                     self._remote_site)
 
-def run(args, site, options):
+def run(args, site, options, site_keys):
     """
     Perform the upload for a single site.
     """
 
-    uploader = Uploader(site, **options)
+    uploader = Uploader(site, site_keys, **options)
     uploader.upload(args.name, args.version)
     if args.start:
-        uploader.start(args.name, args.version, stop=args.stop)
+        uploader.start(args.name, args.version, instance_name=args.instance,
+                       stop=args.stop)
 
 DEFAULT_SITE = 'default'
 
@@ -187,21 +200,19 @@ def main():
     with open('settings.yml') as settings_file:
         config = yaml.load(settings_file)
 
+    site_keys = dict(
+        (site, options['key'] if 'key' in options and 'v1' not in options else None)
+        for site, options in config.items() if site != DEFAULT_SITE
+    )
     if args.sites:
-        logging.info('Sites: %s', ', '.join(args.sites))
-        # pylint: disable=no-member
-        for site, key in itertools.zip_longest(args.sites, args.keys):
-            options = get_options(config, site)
-            if key is not None:
-                options['key'] = key
-
-            run(args, site, options)
+        site_keys.update(zip(args.sites, args.keys))
+        sites = args.sites
     else:
-        sites = [site for site in config.keys() if site != DEFAULT_SITE]
-        logging.info('Sites: %s', ', '.join(sites))
-        for site in sites:
-            options = get_options(config, site)
-            run(args, site, options)
+        sites = site_keys.keys()
+
+    for site in sites:
+        options = get_options(config, site)
+        run(args, site, options, site_keys)
 
 if __name__ == '__main__':
     main()

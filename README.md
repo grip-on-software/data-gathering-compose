@@ -23,7 +23,7 @@ http://BIG_BOAT/:
 
 Fill in the `BIG_BOAT` domain name (such that it is your dashboard's base URL) 
 and the `API_KEY` (obtainable from the dashboard's configuration when logged in 
-or replace the like with `v1: true` to use the old API).
+or replace the whole key option line with `v1: true` to use the old API).
 
 You can add multiple sites in your settings, all of which are considered by 
 default unless you specify specific ones when running `upload.py`. Ensure you 
@@ -44,4 +44,6 @@ to a dash character, but make sure it is quoted in the YAML file.
 
 A setting block for a site called `default` may provide global parameters. The 
 key-value pairs in the default block are overridden (for simple values) or 
-augmented (for associative values) with preference for the site-specific block.
+augmented (for associative values) with preference for the site-specific block. 
+Note that API keys and API versions are not overridden in this way, although 
+one can alter the API key through command line arguments.
