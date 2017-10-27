@@ -11,6 +11,7 @@ except ImportError:
 import argparse
 import copy
 import logging
+import os.path
 import time
 import yaml
 from bigboat import Client_v1, Client_v2
@@ -24,9 +25,9 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Upload compose files')
     parser.add_argument('sites', nargs='*',
-                        help='URLs to update to, or default to settings.yml')
+                        help='URLs to update to, or default to site settings')
     parser.add_argument('--keys', nargs='*', default=[],
-                        help='API keys to use, or default to settings.yml')
+                        help='API keys to use, or default to site settings')
     parser.add_argument('--name', default='gros-data-gathering-agent',
                         help='Name of the application')
     parser.add_argument('--version', default='1',
@@ -38,6 +39,9 @@ def parse_args():
                         help='(Re)start an instance after updating the app')
     parser.add_argument('--no-stop', action='store_false', dest='stop',
                         default=True, help='Skip stopping an existing instance')
+    parser.add_argument('--compose', help='Directory holding the compose files')
+    parser.add_argument('--settings', default='settings.yml',
+                        help='Path to the file with site settings')
 
     return parser.parse_args()
 
@@ -100,7 +104,7 @@ class Uploader(object):
         self._api = client(self._remote_site, api_key=key)
         return self._api
 
-    def upload(self, name, version):
+    def upload(self, name, version, path=None):
         """
         Upload the compose files to a specific site.
         """
@@ -116,6 +120,9 @@ class Uploader(object):
                 raise RuntimeError('Cannot register application on {}'.format(self._remote_site))
 
         for filename, api_filename in self.FILES:
+            if path is not None:
+                filename = os.path.join(path, filename)
+
             with open(filename) as compose_file:
                 if not self.api.update_compose(name, version, api_filename,
                                                compose_file.read()):
@@ -159,7 +166,7 @@ def run(args, site, options, site_keys):
     """
 
     uploader = Uploader(site, site_keys, **options)
-    uploader.upload(args.name, args.version)
+    uploader.upload(args.name, args.version, path=args.compose)
     if args.start:
         uploader.start(args.name, args.version, instance_name=args.instance,
                        stop=args.stop)
@@ -197,7 +204,7 @@ def main():
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                         level=getattr(logging, args.log.upper(), None))
 
-    with open('settings.yml') as settings_file:
+    with open(args.settings) as settings_file:
         config = yaml.load(settings_file)
 
     site_keys = dict(
