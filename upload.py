@@ -30,7 +30,7 @@ def parse_args():
                         help='API keys to use, or default to site settings')
     parser.add_argument('--name', default='gros-data-gathering-agent',
                         help='Name of the application')
-    parser.add_argument('--version', default='1',
+    parser.add_argument('--version', default='2',
                         help='Version number of the application')
     parser.add_argument('--instance', help='Name of the instance')
     parser.add_argument('--log', choices=log_levels, default='INFO',
