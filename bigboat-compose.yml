@@ -1,5 +1,8 @@
 name: gros-data-gathering-agent
-version: '1'
+version: '2'
 
 agent:
   enable_ssh: true
+www:
+  endpoint: ':8080'
+  protocol: http

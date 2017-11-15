@@ -1,76 +1,29 @@
 # Compose file for the GROS data gathering agent.
 #
-# When starting this application manually in the BigBoat Docker dashboard,
-# ensure that you have all the credentials (usernames, passwords, tokens)
-# and other parameters (project names, source locations) that you are prompted.
+# When (re)starting this application in the BigBoat Docker dashboard,
+# the agent may need additional credentials (usernames, passwords, tokens)
+# and other parameters (project names, source locations) to function.
 #
-# You may be able to leave out some of these credentials. For example, a dropins
-# file store and MonetDB database are not necessary to have in a project.
-#
-# Supply a dash (-) in for unused parameters to indicate that the value is
-# empty. The BigBoat UI does not allow leaving parameters empty (IQT-1456).
+# These parameters may have already been filled in, but check the agent web UI
+# to confirm after restarting. You can find the agent configuration web UI
+# under the instance in the "www" section. More hints are provided there.
 
 agent:
-  image: $DOCKER_REGISTRY/gros-data-gathering
+  image: $DOCKER_REGISTRY/gros-data-gathering:agent-settings
   volumes:
     - /agent/home/agent/export:/home/agent/export
+    - /agent/home/agent/config:/home/agent/config
+    - /agent/home/agent/.ssh:/home/agent/.ssh
   environment:
-    - AGENT_LOGGING=1
-    - JIRA_SERVER=https://{{JIRA_SERVER}}/jira/
-    - JIRA_USER={{JIRA_REPORTER}}
-    - JIRA_PASSWORD={{JIRA_PASSWORD}}
-    - DEFINITIONS_TYPE=git
-    - DEFINITIONS_NAME=quality-report-data
-    - DEFINITIONS_URL=http://{{GITLAB_SERVER}}/gros/quality-report-{}-definition
-    - DEFINITIONS_PATH=quality-report-definition/{}
-    - DEFINITIONS_BASE=ictu
-    - DEFINITIONS_BASE_URL=http://{{GITLAB_SERVER}}/gros/quality-report-data-ictu
-    - DEFINITIONS_REQUIRED_PATHS=
-    - DEFINITIONS_HOST={{GITLAB_SERVER}}
-    - DEFINITIONS_CREDENTIALS_ENV={{DEFINITIONS_CREDENTIALS_ENV}}
-    - DEFINITIONS_USERNAME=git
-    - DEFINITIONS_PASSWORD=
-    - DEFINITIONS_GITLAB_TOKEN={{DEFINITIONS_GITLAB_TOKEN}}
-    - HISTORY_URL=http://{{GITLAB_SERVER}}/gros/quality-report-{}-history
-    - HISTORY_PATH=quality-report-history/{}
-    - HISTORY_FILENAME=history.json.gz
-    - GITLAB_URL=http://www.gitlab.{{PROJECT_NAME}}.example/
-    - GITLAB_TOKEN={{GITLAB_API_TOKEN}}
-    - DROPINS_STORE=owncloud
-    - DROPINS_URL=http://www.owncloud.{{PROJECT_NAME}}.example/
-    - DROPINS_USER={{DROPINS_USER}}
-    - DROPINS_PASSWORD={{DROPINS_PASSWORD}}
-    - MONETDB_USER={{MONETDB_USER}}
-    - MONETDB_PASSWORD={{MONETDB_PASSWORD}}
-    - MONETDB_HOST=db.monetdb.{{PROJECT_NAME}}.example
-    - MONETDB_NAME=gros
-    - SSH_USERNAME=agent-{{JIRA_KEY}}
-    - SSH_HOST={{SSH_HOST}}
-    - SSH_HTTPS_CERT=certs/gros.crt
-    - IMPORTER_URL=http://{{JENKINS_SERVER}}/view/GROS%20build/job/build-importerjson/lastSuccessfulBuild/artifact/Code/importerjson/dist/*zip*/dist.zip
-    - BIGBOAT_HOST={{BIGBOAT_HOST}}
-    - BIGBOAT_KEY={{BIGBOAT_KEY}}
-    - JENKINS_HOST={{JENKINS_HOST}}
-    - JENKINS_USERNAME={{JENKINS_USERNAME}}
-    - JENKINS_PASSWORD={{JENKINS_PASSWORD}}
-    - JENKINS_VERIFY=false
-    - JENKINS_JOB=
-    - JENKINS_TOKEN=
-    - JIRA_KEY={{JIRA_KEY}}
-    - PROJECT_NAME={{PROJECT_NAME}}
-    - SUBPROJECT_KEY={{SUBPROJECT_KEY}}
-    - TEAM_NAME=
-    - SUPPORT_TEAM=
-    - SOURCE_HOST={{SOURCE_HOST}}
-    - SOURCE_USERNAME={{SOURCE_USERNAME}}
-    - SOURCE_PASSWORD={{SOURCE_PASSWORD}}
-    - SOURCE_GITHUB_API=
-    - SOURCE_GITHUB_TOKEN=
-    - SOURCE_GITLAB_TOKEN={{SOURCE_GITLAB_TOKEN}}
-    - SOURCE_TFS={{SOURCE_TFS}}
-    - SOURCE_GITLAB_GROUP={{SOURCE_GITLAB_GROUP}}
-    - SOURCE_FROM_DATE={{SOURCE_FROM_DATE}}
-    - SOURCE_TAG={{SOURCE_TAG}}
-    - SOURCE_CREDENTIALS_ENV={{SOURCE_CREDENTIALS_ENV}}
-    - SSH_IDENTITY=/home/agent/.ssh/id_rsa
-    - CRON_PERIOD={{CRON_PERIOD}}
+    - CRON_PERIOD=daily
+www:
+  image: $DOCKER_REGISTRY/gros-agent-config
+  volumes:
+    - /agent/home/agent/export:/home/agent/export
+    - /agent/home/agent/config:/home/agent/config
+    - /agent/home/agent/.ssh:/home/agent/.ssh
+  environment:
+    - EXPORT_PATH=/home/agent/export
+    - CONFIG_PATH=/home/agent/config
+    - IDENTITY_PATH=/home/agent/.ssh
+    - LISTEN_ADDR=0.0.0.0
