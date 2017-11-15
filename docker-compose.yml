@@ -9,7 +9,7 @@
 # under the instance in the "www" section. More hints are provided there.
 
 agent:
-  image: $DOCKER_REGISTRY/gros-data-gathering:agent-settings
+  image: $DOCKER_REGISTRY/gros-data-gathering:latest
   volumes:
     - /agent/home/agent/export:/home/agent/export
     - /agent/home/agent/config:/home/agent/config
