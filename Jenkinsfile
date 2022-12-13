@@ -43,8 +43,8 @@ pipeline {
             steps {
                 withPythonEnv('System-CPython-3') {
                     pysh 'python -m pip install -r analysis-requirements.txt'
-                    pysh 'mypy upload.py --html-report mypy-report --cobertura-xml-report mypy-report --junit-xml mypy-report/junit.xml --no-incremental --show-traceback || true'
-                    pysh 'python -m pylint upload.py --exit-zero --reports=n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" -d duplicate-code > pylint-report.txt'
+                    pysh 'mypy scripts --html-report mypy-report --cobertura-xml-report mypy-report --junit-xml mypy-report/junit.xml --no-incremental --show-traceback || true'
+                    pysh 'python -m pylint scripts --exit-zero --reports=n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" -d duplicate-code > pylint-report.txt'
                 }
                 withSonarQubeEnv('SonarQube') {
                     sh '${SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=data-gathering-compose:$BRANCH_NAME -Dsonar.projectName="Data gathering compose $BRANCH_NAME"'
