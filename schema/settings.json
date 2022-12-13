@@ -1,0 +1,56 @@
+{
+    "$id": "https://gros.liacs.nl/schema/data-gathering-compose/settings.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Data gathering compose upload settings",
+    "$ref": "#/$defs/settings",
+    "$defs": {
+        "settings": {
+            "type": "object",
+            "properties": {
+                "default": {"$ref": "#/$defs/default_site"}
+            },
+            "patternProperties": {
+                "^https?://[^/]+/$": {"$ref": "#/$defs/site"}
+            }
+        },
+        "default_site": {
+            "type": "object",
+            "description": "Settings for all BigBoat sites, which may be merged with site-specific settings.",
+            "properties": {
+                "params": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[A-Z][A-Z_]+$": {
+                            "type": "string",
+                            "description": "Parameter to start the Docker-compose instance on the BigBoat site with."
+                        }
+                    }
+                }
+            }
+        },
+        "site": {
+            "allOf": [
+                {"$ref": "#/$defs/default_site"}
+            ],
+            "type": "object",
+            "description": "Settings for a BigBoat site.",
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]+$",
+                    "description": "API key for the BigBoat site."
+                },
+                "remote_site": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL of the BigBoat site, if not the same as the BigBoat dashboard being monitored."
+                },
+                "instance": {
+                    "type": "string",
+                    "pattern": "^[a-z-]+$",
+                    "description": "Name of the Docker-compose instance."
+                }
+            }
+        }
+    }
+}

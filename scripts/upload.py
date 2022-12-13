@@ -1,29 +1,45 @@
 """
 Script that uploads compose files to applications on BigBoat instances.
+
+Copyright 2017-2020 ICTU
+Copyright 2017-2022 Leiden University
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 """
 
-try:
-    from future import standard_library
-    standard_library.install_aliases()
-except ImportError:
-    raise
-
-import argparse
+from argparse import ArgumentParser, Namespace
 import copy
 import logging
 import os.path
+from pathlib import Path
 import time
+from typing import overload, Dict, Iterable, Optional, Union
 import yaml
 from bigboat import Client_v1, Client_v2
 
-def parse_args():
+PathLike = Union[str, os.PathLike]
+Option = Union[str, Dict[str, str]]
+Options = Dict[str, Option]
+Config = Dict[str, Options]
+
+def parse_args() -> Namespace:
     """
     Parse command line arguments.
     """
 
     log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 
-    parser = argparse.ArgumentParser(description='Upload compose files')
+    parser = ArgumentParser(description='Upload compose files')
     parser.add_argument('sites', nargs='*',
                         help='URLs to update to, or default to site settings')
     parser.add_argument('--keys', nargs='*', default=[],
@@ -45,7 +61,7 @@ def parse_args():
 
     return parser.parse_args()
 
-class Uploader(object):
+class Uploader:
     """
     BigBoat dashboard application compose file uploader using the BigBoat API.
     """
@@ -59,19 +75,28 @@ class Uploader(object):
     # Number of seconds to wait to check if the instance has been stopped
     RESTART_POLL = 2
 
-    def __init__(self, site, site_keys, **options):
+    def __init__(self, site: str, site_keys: Dict[str, Optional[str]],
+                 **options: Option) -> None:
         self._site = site
         self._site_keys = site_keys
         self._options = options
 
         if 'remote_site' in self._options:
-            self._remote_site = self._options['remote_site']
+            self._remote_site = str(self._options['remote_site'])
         else:
             self._remote_site = self._site
 
-        self._api = None
+        self._api: Optional[Union[Client_v1, Client_v2]] = None
 
-    def _get_key(self, default=None, site=None):
+    @overload
+    def _get_key(self, default: str, site: Optional[str] = None) -> str:
+        ...
+    @overload
+    def _get_key(self, default: None = None,
+                 site: Optional[str] = None) -> Optional[str]:
+        ...
+    def _get_key(self, default: Optional[str] = None,
+                 site: Optional[str] = None) -> Optional[str]:
         if site is None:
             site = self._site
 
@@ -81,7 +106,7 @@ class Uploader(object):
         return default
 
     @property
-    def api(self):
+    def api(self) -> Union[Client_v1, Client_v2]:
         """
         Retrieve an API instance for the given site URL. If possible, the API
         is instantiated as a v2 Client with the API key or one from the provided
@@ -93,54 +118,57 @@ class Uploader(object):
         if self._api is not None:
             return self._api
 
-        client = Client_v2
+        logging.info('Setting up API for %s', self._remote_site)
         key = self._get_key(site=self._remote_site)
 
         if key is None:
-            client = Client_v1
+            self._api = Client_v1(self._remote_site)
+        else:
+            self._api = Client_v2(self._remote_site, api_key=key)
 
-        logging.info('Setting up API for %s', self._remote_site)
-
-        self._api = client(self._remote_site, api_key=key)
         return self._api
 
-    def upload(self, name, version, path=None):
+    def upload(self, name: str, version: str,
+               path: Optional[PathLike] = None) -> None:
         """
         Upload the compose files to a specific site.
         """
 
         if isinstance(self.api, Client_v1):
-            raise RuntimeError('API for {} cannot upload compose files'.format(self._remote_site))
+            raise RuntimeError(f'API for {self._remote_site} cannot upload compose files')
 
         application = self.api.get_app(name, version)
         if application is None:
             logging.warning('Application %s version %s is not on %s, creating.',
                             name, version, self._remote_site)
             if self.api.update_app(name, version) is None:
-                raise RuntimeError('Cannot register application on {}'.format(self._remote_site))
+                raise RuntimeError(f'Cannot register application on {self._remote_site}')
 
         for filename, api_filename in self.FILES:
             if path is not None:
-                filename = os.path.join(path, filename)
+                filename = str(Path(path) / filename)
 
-            with open(filename) as compose_file:
+            with open(filename, 'r', encoding='utf-8') as compose_file:
                 if not self.api.update_compose(name, version, api_filename,
                                                compose_file.read()):
-                    raise RuntimeError('Cannot update compose file on {}'.format(self._remote_site))
+                    raise RuntimeError(f'Cannot update compose file on {self._remote_site}')
 
-    def start(self, name, version, instance_name=None, stop=True):
+    def start(self, name: str, version: str,
+              instance_name: Optional[str] = None, stop: bool = True) -> None:
         """
         Request that the instance for the application is (re)started.
         """
 
         if instance_name is None:
-            instance_name = self._options.get('instance', name)
+            instance_name = str(self._options.get('instance', name))
 
         parameters = {
             "BIGBOAT_HOST": self._site,
             "BIGBOAT_KEY": self._get_key(default='-')
         }
-        parameters.update(self._options.get('params', {}))
+        params = self._options.get('params', {})
+        if isinstance(params, dict):
+            parameters.update(params)
 
         if stop:
             first = True
@@ -155,12 +183,13 @@ class Uploader(object):
         instance = self.api.update_instance(instance_name, name, version,
                                             parameters=parameters)
         if instance is None:
-            raise RuntimeError('Could not start instance on {}'.format(self._remote_site))
+            raise RuntimeError(f'Could not start instance on {self._remote_site}')
 
         logging.info('Started application %s version %s on %s', name, version,
                      self._remote_site)
 
-def run(args, site, options, site_keys):
+def run(args: Namespace, site: str, options: Options,
+        site_keys: Dict[str, Optional[str]]) -> None:
     """
     Perform the upload for a single site.
     """
@@ -173,7 +202,7 @@ def run(args, site, options, site_keys):
 
 DEFAULT_SITE = 'default'
 
-def get_options(config, site):
+def get_options(config: Config, site: str) -> Options:
     """
     Create an options dictionary based on configuration for a site as well as
     a default configuration.
@@ -185,17 +214,18 @@ def get_options(config, site):
 
     options = copy.deepcopy(config.get(DEFAULT_SITE, {}))
     new_options = config.get(site, {})
-    for key, value in list(new_options.iteritems()):
+    for key, value in list(new_options.items()):
         if isinstance(value, dict):
             new_value = options.get(key, {})
-            new_value.update(value)
-            options[key] = new_value
+            if isinstance(new_value, dict):
+                new_value.update(value)
+                options[key] = new_value
         else:
             options[key] = value
 
     return options
 
-def main():
+def main() -> None:
     """
     Main entry point.
     """
@@ -204,16 +234,17 @@ def main():
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                         level=getattr(logging, args.log.upper(), None))
 
-    with open(args.settings) as settings_file:
-        config = yaml.load(settings_file)
+    with open(args.settings, 'r', encoding='utf-8') as settings_file:
+        config: Config = yaml.safe_load(settings_file)
 
     site_keys = dict(
-        (site, options['key'] if 'key' in options and 'v1' not in options else None)
+        (site, str(options['key']) if 'key' in options and 'v1' not in options
+         else None)
         for site, options in config.items() if site != DEFAULT_SITE
     )
     if args.sites:
         site_keys.update(zip(args.sites, args.keys))
-        sites = args.sites
+        sites: Iterable[str] = args.sites
     else:
         sites = site_keys.keys()
 

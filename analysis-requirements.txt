@@ -1,0 +1,4 @@
+lxml
+pylint
+mypy
+types-PyYAML
