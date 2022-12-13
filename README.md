@@ -8,15 +8,15 @@ scripts to update the applications of these instances through the BigBoat API.
 ## Requirements
 
 - [BigBoat](https://pypi.python.org/pypi/bigboat)
-- [PyYAML](http://pyyaml.org/wiki/PyYAMLDocumentation)
+- [PyYAML](https://pyyaml.org/wiki/PyYAMLDocumentation)
 
-Use `pip install bigboat pyyaml` to install the dependencies.
+Use `pip install -r requirements.txt` to install the dependencies.
 
 ## Configuration
 
 Add a file `settings.yml` with blocks that look like the following:
 
-```
+```yaml
 default:
   params:
     ENV_PARAM: value
