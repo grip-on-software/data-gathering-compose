@@ -40,6 +40,11 @@
                     "pattern": "^[a-f0-9]+$",
                     "description": "API key for the BigBoat site."
                 },
+                "v1": {
+                    "type": "bool",
+                    "default": false,
+                    "description": "Use the deprecated v1 API for the BigBoat site."
+                },
                 "remote_site": {
                     "type": "string",
                     "format": "uri",

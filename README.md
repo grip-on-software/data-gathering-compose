@@ -1,9 +1,9 @@
 Compose files and scripts for data gathering
 ============================================
 
-This repository holds organization-specific configuration files for creating and 
-starting Docker instances based on Docker Compose. It also holds some scripts 
-to update the applications of these instances through the BigBoat API.
+This repository holds organization-specific configuration files for creating 
+and starting Docker instances based on Docker Compose. It also holds some 
+scripts to update the applications of these instances through the BigBoat API.
 
 ## Requirements
 
@@ -17,17 +17,26 @@ Use `pip install bigboat pyyaml` to install the dependencies.
 Add a file `settings.yml` with blocks that look like the following:
 
 ```
+default:
+  params:
+    ENV_PARAM: value
 http://BIG_BOAT/:
   key: API_KEY
 ```
 
 Fill in the `BIG_BOAT` domain name (such that it is your dashboard's base URL) 
 and the `API_KEY` (obtainable from the dashboard's configuration when logged in 
-or replace the whole key option line with `v1: true` to use the old API).
+or replace the whole key option line with `v1: true` to use the old API). 
+Environment parameters to be passed when starting the instance can be passed in 
+a `params` object field, which is merged with the default object. Additional 
+settings are `remote_site`, in order to set up on another BigBoat instance 
+rather than the dashboard that is being monitored, and `instance` to give the 
+Docker instance another name.
 
 You can add multiple sites in your settings, all of which are considered by 
-default unless you specify specific ones when running `upload.py`. Ensure you 
-leave no empty lines between the blocks. Comments are allowed, though. 
+default unless you specify specific ones when running `scripts/upload.py`. 
+Ensure you leave no empty lines between the blocks. Comments are allowed, 
+though. 
 
 Edit `docker-compose.yml` and `bigboat-compose.yml` to alter or add generic 
 configuration of the Docker instances. Environment variables are used by the 
