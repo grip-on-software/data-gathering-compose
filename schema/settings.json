@@ -41,7 +41,7 @@
                     "description": "API key for the BigBoat site."
                 },
                 "v1": {
-                    "type": "bool",
+                    "type": "boolean",
                     "default": false,
                     "description": "Use the deprecated v1 API for the BigBoat site."
                 },
